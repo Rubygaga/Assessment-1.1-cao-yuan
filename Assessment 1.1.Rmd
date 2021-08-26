@@ -1,0 +1,73 @@
+---
+title: "Assessment 1.1"
+author: "CAO YUAN 4659774"
+date: "8/25/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+install.packages("tidyverse")  
+library(tidyverse)
+install.packages("knitr")  
+library(knitr)
+install.packages("skimr")  
+library(skimr)
+
+
+# ***RMarkdown editing***
+# ***R Markdown provides an authoring framework for data science. You can use a single R Markdown file to save and execute code and generate high quality reports that can be shared with an audience.R Markdown documents are fully reproducible and support dozens of static and dynamic output formats***
+
+[links](https://rmarkdown.rstudio.com/lesson-8.html)
+
+
+```{r}
+fastfood<- read.csv("/Users/rubycao/Documents/aaaa.csv", stringsAsFactors = FALSE,quote = "")
+```
+head(fastfood, n=10)
+
+kable(fastfood[1:10, 1:5])
+class
+  
+```{r}
+fastfood %>%
+  filter(cal_fat > 1000) %>%
+   knitr::kable()
+```
+
+```{r}
+ fastfood %>%
+  filter(total_fat > 40,total_carb > 80) %>%
+  as_data_frame() -> dont_eat_this
+   knitr::kable()
+```
+   
+
+```{r}
+fastfood %>%
+filter(restaurant == 'Mcdonalds') %>%
+   knitr::kable()
+```
+
