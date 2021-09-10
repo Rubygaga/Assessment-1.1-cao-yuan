@@ -1,0 +1,179 @@
+---
+title: "Assignment2.rmd"
+author: "CAO YUAN 4659774"
+date: "9/2/2021"
+output: html_document
+---
+
+install.packages("tidyverse")  
+library(tidyverse)
+install.packages("knitr")  
+library(knitr)
+install.packages("skimr")  
+library(skimr)
+install.packages("dplyr")
+library(dplyr)
+install.packages("readr")
+library(readr)
+install.packages("tidymodels")
+library(tidymodels)
+install.packages("plyr")
+library(plyr)
+library(ggplot2)
+library(patchwork)
+library(forcats)
+library(tidyr)
+install.packages("imager")
+```{r}
+library(tidyverse)
+library(dplyr)
+library(skimr)
+library(knitr)
+
+```
+
+
+```{r}
+thanksgiving_meals<-readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018/2018-11-20/thanksgiving_meals.csv')
+
+```
+img<-load.image (Users/rubycao/Desktop/ruby.JPG)
+###Part 2: Data Wrangling and visualization
+
+### 1
+```{r}
+ thanksgiving_meals %>%
+  head(10) %>%
+ kable()
+```
+### 2
+```{r}
+thanksgiving_meals %>%
+  mutate(family_income=fct_reorder(family_income, parse_number(family_income))) %>%
+
+  kable()
+```
+### 3
+```{r}
+skimr::skim(thanksgiving_meals) %>%
+  kable()
+```
+
+```{r}
+summary(thanksgiving_meals) %>%
+  kable()
+```
+
+### 4
+```{r}
+thanksgiving_meals %>%
+  filter(celebrate == 'Yes') %>%
+   count()
+```
+### 5
+```{r}
+thanksgiving_meals %>% filter(celebrate != 'No') %>%
+  dplyr::count(main_dish, main_prep,sort=TRUE) %>%
+  kable()
+```
+### 6
+```{r}
+thanksgiving_meals %>% filter(celebrate != 'No') %>% count(main_dish, main_prep, sort=TRUE) %>% 
+ggplot(aes(n,main_dish,fill=factor(main_prep))) +  geom_col(position='stack',alpha=0.8) +coord_flip() +theme_linedraw()
+```
+### 7
+```{r}
+thanksgiving_meals %>% filter(cranberry!='None') %>%
+   count() %>%
+  kable()
+```
+
+```{r}
+thanksgiving_meals %>% filter(gravy == 'Yes') %>%
+   count() %>%
+  kable()
+```
+### 8/9
+```{r}
+thanksgiving_meals %>%
+  mutate(family_income=fct_reorder(family_income, parse_number(family_income))) %>%
+  dplyr::count(celebrate,family_income,sort=TRUE) %>%
+  dplyr::filter(celebrate == 'Yes') %>%
+  group_by(family_income) %>%
+  ggplot(aes(family_income,n,fill=celebrate)) +
+  geom_col() +
+  coord_flip() +
+  labs(x="Income range", y="Number of people") +
+ theme_test()
+```
+
+###10/11
+```{r}
+thanksgiving_meals %>%
+select(starts_with("side"),-side15) %>%
+  gather(type, value,na.rm=TRUE) %>%
+   dplyr::count(type,value, sort = TRUE) %>%
+  select(value, n) %>%
+  head(1) %>%
+  as_data_frame()->most_common_side 
+  kable()
+```
+
+```{r}
+thanksgiving_meals %>%
+select(starts_with("pie"),-pie13) %>%
+  gather(type, value,na.rm=TRUE) %>%
+   dplyr::count(type,value, sort = TRUE) %>%
+  select(value, n) %>%
+  head(1) %>%
+  as_data_frame(most_common_pie)%>%
+  kable()
+```
+
+```{r}
+thanksgiving_meals %>%
+select(starts_with("dessert"),-dessert11) %>%
+  gather(type, value,na.rm=TRUE) %>%
+   dplyr::count(type,value, sort = TRUE) %>%
+  filter(value!="None") %>%
+  select(value, n) %>%
+  head(1) %>%
+  as_data_frame(most_common_dessert)%>%
+  kable()
+```
+
+```{r}
+ union(most_common_dessert, most_common_pie)%>% union(most_common_side) %>%
+  ggplot(aes(value,n,fill=value)) +
+  geom_col() +
+   labs(title= "Most common dessert, side and pie") +
+  theme_test()
+  
+```
+
+
+###12/13
+```{r}
+thanksgiving_meals %>%
+  mutate(family_income=fct_reorder(family_income, parse_number(family_income))) %>%
+  dplyr::filter(celebrate == 'Yes') %>%
+  select(family_income, main_dish) %>%
+   dplyr::count(family_income, main_dish) %>%
+  kable()
+```
+
+```{r}
+thanksgiving_meals %>%
+  mutate(family_income=fct_reorder(family_income, parse_number(family_income))) %>%
+  dplyr::filter(celebrate == 'Yes') %>%
+  select(family_income, main_dish) %>%
+   dplyr::count(family_income, main_dish) %>%
+  ggplot(aes(family_income,n,fill=main_dish)) +
+  geom_col() +
+  coord_flip() +
+  labs(x="Income range", y="Number of people") +
+ theme_test()
+
+```
+
+
