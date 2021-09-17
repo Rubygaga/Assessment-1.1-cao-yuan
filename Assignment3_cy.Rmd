@@ -1,0 +1,288 @@
+---
+title: "Assessment 3 Business report"
+author: "YUAN CAO 4659774 , Chiu Yee Lim 4663994"
+date: "9/17/2021"
+output: 
+  html_document: 
+    css: Assignment3_cy.Rmd
+---
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(skimr)
+library(knitr)
+library(reader)
+library(readxl)
+library(tidymodels)
+```
+
+/* Whole document: */
+h2 { /* Header 2 */
+    font-size: 26px;
+    font-family: "Times New Roman", Times, serif;
+}
+h3 { /* Header 3 */
+  font-size: 22px;
+  font-family: "Times New Roman", Times, serif;
+}
+h4 { /* Header 4 */
+  font-size: 20px;
+  font-family: "Times New Roman", Times, serif;
+}
+
+## Executive Summary
+#### Our climate is changing at an alarming rate, the role of the food we eat in combating climate change has come into focus, and it is now clear that we can help the global effort by adjusting our diet.The data used in this report, provided by the German company Nu3 and the Food and Agriculture Organization of the United Nations (FAO), measured the consumption availability of 11 food items and their respective per capita carbon footprints for all countries studied. The study reveals the annual CO2 emissions per person in 130 countries around the world, showing which countries could significantly reduce their carbon footprint by switching to a plant-based diet, and which food types produce the highest CO2 emissions. We hope this report helps to think about the two-way street between the climate and their food, and to choose to eat food that is good for both their health and for the planet.
+
+
+## Introduction
+#### Public concern about climate change has increased greatly in recent years. Humans are beginning to realize that their actions are releasing large amounts of carbon into the atmosphere in the form of carbon dioxide (CO2). As highlighted by the growing vegan movement, humans are beginning to understand the carbon footprint left by our eating habits. Globally, 20% of direct greenhouse gas emissions are from food and agriculture, so clearly diets have a critical role in supporting the international mission to minimise anthropogenic emissions and limit the most severe effects of climate change.
+
+## Data And Sources
+```{r}
+Food_consumption <- read_excel("Food consumption.xlsx")
+```
+
+```{r}
+Food_consumption %>%
+  head(10) %>%
+  kable()
+```
+## Data Summary
+
+#### Using a preliminary skim, the dataset has 130 unique countries, each tagged with 11 different categories of food, and no missing values.
+#### This data was found in the TidyTuesday data repository of GitHub. The data, supplied from German Company Nu3 and the Food and Agriculture Organization of the United Nations (FAO), was collected in 2017 and measures the quantity of food supplied for consumption of 11 food types for all countries researched, and its respective carbon footprint on a per-capita basis. The data contains 1430 observations of 4 variables: Country, Food Category, Consumption (per-capita in KG), and CO2 Emission (per-capita in KG). As we can see, data looks clean and properly arranged. There are 4 columns. We have the country, the category of the food consumed, how much is consumed, and how much CO2 is emitted. Some important units provided in the readme:
+#### - Consumption is measured in kg/person/year
+#### - Co2 Emission is measured in kg CO2/person/year
+
+```{r}
+skim(Food_consumption)
+```
+## Asking Questions
+
+### Major Question:
+#### Can we predict the Co2 emission depends on the food consumption and food categories?
+### Subquestions:
+#### Q1:How many different types of food_category are there?
+#### Q2:How about relation between consumption and co2_emission?
+#### Q3:Which foods contribute most to CO2 emissions and how are they distributed across countries?
+
+
+## Data Exploration
+#### Now let's explore the data by finding the answer to the above subquestions.
+
+### Q1:How many different types of food_category are there?
+
+```{r}
+Food_consumption %>%
+  count(food_category) %>%
+  kable()
+```
+#### We can see that there are 11 types of food_category - Beef, Eggs, Fish, Lamb&goat, Milk - inc. cheese, Nuts inc. Peanut Butter, Pork, Poultry, Rice, Soybeans,  Wheat and Wheat Products. Each type has 130 values in it. This should make it easier for us to do our analysis and data viz.
+
+### Q2:How about relation between consumption and co2_emission?
+
+#### First of all, we will try to see how food consumption and co2_emission are distributed using a point plot.
+```{r}
+Food_consumption %>% 
+  ggplot(aes(consumption, co2_emmission)) +
+    geom_point(color = "orange", alpha = 0.3, position = "jitter") +
+    stat_smooth(method="lm", se=FALSE,size = 0.3) +
+    labs(title = "CO2 emission vs Food Consumption",
+         x = "Food Consumption (kg/person/year)",
+         y = "CO2 Emission (kg/person/year)"
+         )
+
+```
+
+```{r}
+Food_consumption %>% 
+  ggplot(aes(consumption, co2_emmission,colour=food_category)) +
+    geom_point(alpha = 0.3, position = "jitter") +
+    stat_smooth(method="lm", se=FALSE,size = 0.3) +
+    labs(title = "CO2 emission vs Food Consumption",
+         x = "Food Consumption (kg/person/year)",
+         y = "CO2 Emission (kg/person/year)"
+         )
+
+```
+
+```{r}
+Food_consumption %>%
+ gather(key = "feature", value = "value", -food_category, -country) %>%
+ mutate(feature = str_to_title(feature %>% str_replace("_", " "))) %>% 
+ ggplot() +
+ geom_bar(aes(x = feature, y = value, fill = feature), stat = "identity") +
+ facet_wrap(~food_category, scales = "free") +
+ theme(legend.position = "bottom",
+       axis.text.x = element_blank()) + 
+ labs(x = "Features",
+      y = element_blank(),
+      fill = "Feature")
+```
+
+#### Based on the existing dataset we create another column to help us classify the dataset into animal and non-animal food.
+```{r}
+Food_consumption_1 <- Food_consumption %>% 
+    mutate(Animal_Category = if_else(food_category %in% c("Beef", "Pork", "Poultry", "Lamb & Goat", "Fish", "Eggs", "Milk - inc. cheese"), "Animal", "Non Animal"))
+
+Food_consumption %>% head() %>% knitr::kable()
+```
+
+```{r}
+Food_consumption_1 %>% 
+  ggplot(aes(consumption, co2_emmission, colour = Animal_Category)) +
+     stat_smooth(method="lm", se=FALSE,size = 1)
+   
+```
+
+#### The above graphs show a strong positive linear relationship between food consumption and CO2 emissions, and it seems to vary depending on the type of food consumed. We next go on to examine the distribution of carbon emissions by splitting it according to each food type.It strongly suggests that there is a mathematical relationship to calculate the carbon emission level when food consumption is known.The most important takeaway from this study is that there are huge differences in CO2 emissions for different foods.Clearly, animal-based foods tend to have a higher footprint than nonanimal-based food.
+
+### Q3:Which foods contribute most to CO2 emissions and how are they distributed across countries?
+
+```{r}
+Food_consumption %>% 
+  group_by(food_category) %>% 
+  summarize(avg.co2 = sum(co2_emmission)/n()) %>% 
+  ggplot(aes(fct_reorder(food_category, avg.co2), avg.co2, fill = food_category)) +
+  geom_col(show.legend = F,position='identity',alpha=0.5) +
+   theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))+
+  labs( title = "Mean CO2 emission across various food categories",
+    x = "Food Categories",
+    y = "Average CO2 Emissions"
+  )
+```
+
+#### In the visualization, we see the average CO2 emissions from 11 different food categories, the least soybeans to the most beef.
+
+
+```{r}
+Food_consumption %>% 
+  filter(food_category == "Beef") %>%
+  arrange(desc(consumption)) %>% 
+  top_n(20) %>% 
+  ggplot(aes(fct_reorder(country, consumption), consumption, fill = country)) +
+  geom_col(show.legend = F, alpha=0.7) +
+  coord_flip() +
+  labs(
+    x = "Country",
+    y = "Beef Consumption"
+  )
+```
+
+#### Argentina topped the list by a wide margin. And a significant number of North and South American countries show up as big beef consumers.
+#### Based on this data I tried to see if I could use CO2 emissions to predict whether a country belongs to the Americas or not.I used the countrycode package to create a new column to determine which continent a country belongs to, and further create a binary classification of whether the country belongs to the Americas.
+
+```{r}
+library(countrycode)
+library(janitor)
+
+food <- Food_consumption %>%
+  select(-consumption) %>%
+  pivot_wider(names_from = food_category,
+              values_from = co2_emmission) %>%
+  clean_names() %>%
+  mutate(continent = countrycode(country,
+                                 origin = "country.name",
+                                 destination = "continent")) %>%
+  mutate(americas = case_when(continent == "Americas" ~ "Americas",
+                              TRUE ~ "Other")) %>%
+  select(-country,-continent) %>%
+  mutate_if(is.character, as_factor)
+
+food %>% 
+  select(americas, everything())
+```
+
+## Let’s dive into modelling
+
+### Data Splitting
+#### We first split the dataset into a training set and a test set. I chose to use stratified random sampling, which is done by randomly selecting samples in each class.
+
+```{r}
+food_split <- initial_split(food)
+food_train <- training(food_split)
+food_test <- testing(food_split)
+```
+
+### Data Preprocessing
+#### Next, we use the recipes package. The intuition behind this package is to define a recipe or blueprint that can be used to sequentially define the encodings and preprocessing of the data.
+
+```{r}
+food_rec <- recipe(americas ~ ., data = food_train) %>%
+  step_corr(all_numeric()) %>%
+  prep()
+```
+
+### Model Specification
+
+```{r}
+library(ranger)
+rf_spec <- rand_forest(mode = "classification") %>%
+  set_engine("ranger")
+```
+
+```{r}
+rf_fit <- rf_spec %>% 
+  fit(americas ~ .,
+      data = juice(food_rec))
+rf_fit 
+```
+
+### Model Evaluation
+#### Now to compare training results versus test results.
+
+```{r}
+results_train <- rf_fit %>%
+      predict(new_data = food_train) %>%
+      mutate(truth = food_train$americas) %>%
+      conf_mat(truth, .pred_class) %>%
+      summary() %>%
+      mutate(model = "rf")
+
+
+results_test <-rf_fit %>%
+      predict(new_data = bake(food_rec, food_test)) %>%
+      mutate(truth = food_test$americas) %>%
+      conf_mat(truth, .pred_class) %>%
+      summary() %>%
+      mutate(model = "rf")
+
+```
+
+```{r}
+library(patchwork) #to combine ggplots
+
+p1 <- results_train %>%
+  filter(.metric %in% c("accuracy", "precision", "recall", "f_meas")) %>%
+  ggplot(aes(.metric, .estimate)) +
+  geom_col() +
+  geom_text(aes(label = round(.estimate, 2)),
+            position = position_dodge(width = 0.9), vjust = -0.5) + 
+  labs(
+    x = "Performance Metrics (Training Data)",
+    y = "Score"
+  )
+
+p2 <- results_test %>%
+  filter(.metric %in% c("accuracy", "precision", "recall", "f_meas")) %>%
+  ggplot(aes(.metric, .estimate)) +
+  geom_col() +
+  geom_text(aes(label = round(.estimate, 2)),
+            position = position_dodge(width = 0.9), vjust = -0.5) + 
+  labs(
+    x = "Performance Metrics (Test Data)",
+    y = "Score"
+  )
+
+p1 + p2 + plot_layout(guides = "collect") & theme(legend.position = 'bottom')
+```
+
+## Improvement
+
+#### These are some of the issues affected by CO2 Emissions. Firstly, it will cause environmental problems such as Greenhouse Gas which is the gas that absorbs heat and makes the planet warmer. Based on research, 40% of Greenhouse Gas Emissions release from food production. Then, CO2 Emission will also cause human health problems such as inflammation, reduced cognitive performance and kidney and bone problems. We can decrease CO2 Emissions by changing food production. Firstly, we shouldn’t waste food. We should plan our meals before going grocery shopping and we should make the grocery list to avoid over grocery shopping. After that, we should decrease the amount of animal production such as meat and eggs. We can decrease the amount of meat intake and set the meat intake limit for every week. Lastly, we should try to take plant-based protein such as tofu, nuts and wheat which have the same level of protein as meat.
+
+## Conclusion 
+
+#### This study evaluated the contribution of different food groups to CO2 emissions, and the results show that there are significant differences in the impact of animal and non-animal food consumption on the carbon footprint. And there is a strong positive linear relationship between food consumption and CO2 emissions. In conclusion, these results confirm that we can reduce CO2 emissions by minimizing the consumption of beef and dairy products and by minimizing food waste at the household level.
+
